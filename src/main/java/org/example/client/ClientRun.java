@@ -11,10 +11,8 @@ public class ClientRun {
         System.out.println("Enter your username for the group chat: ");
         String username = scanner.nextLine();
 
-        User user = new User(username);
+        Client client = new Client(username);
+        new Thread(client).start();
 
-        System.out.println("Write your first message.");
-
-        user.sendMessage();
     }
 }

@@ -5,4 +5,5 @@
 *.xml
 *.lock
 *.properties
+*/idea
 

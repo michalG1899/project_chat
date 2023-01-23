@@ -16,11 +16,11 @@ public class Client implements Runnable {
 
     @Override
     public void run() {
-        var webSocketListener = new WebSocket.Listener() { //definiujemy Listenera, dodać obsługę plików binarnych
+        var webSocketListener = new WebSocket.Listener() {
 
             @Override
             public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
-                System.out.println("Received message: " + data);
+                System.out.println(data);
                 return WebSocket.Listener.super.onText(webSocket, data, last);
             }
 
@@ -28,6 +28,12 @@ public class Client implements Runnable {
             public void onOpen(WebSocket webSocket) {
                 System.out.println("Welcome user: " + username + "!");
                 WebSocket.Listener.super.onOpen(webSocket);
+            }
+
+            @Override
+            public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
+                System.out.println("Connection closed. Reason: " + reason);
+                return WebSocket.Listener.super.onClose(webSocket, statusCode, reason);
             }
         };
 
@@ -38,14 +44,14 @@ public class Client implements Runnable {
 
         var shutdownHook = Thread.ofPlatform()
                 .unstarted(() -> webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "Exiting").join());
-        Runtime.getRuntime().addShutdownHook(shutdownHook); //zdefiniowanie tego, że chat działa dopoóki ktoś nie naciśnie ctrl+c w terminalu, dodanie obsługo polcenia exit (rejestracja shutdown hooka, żeby odrejestrować się z serwera)
+        Runtime.getRuntime().addShutdownHook(shutdownHook);
 
-        Scanner scanner = new Scanner(System.in); //zaczynamy tutaj to co wpisuje uzytkownik
-        System.out.println("Napisz wiadomosc");
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Napisz wiadomosc:");
 
         while (true) {
             String input = scanner.nextLine();
-            webSocket.sendText(username + ": " + input, false).join(); //lepiej obsłużyć join(), na początek join wystarczy
+            webSocket.sendText(username + ": " + input, false).join();
         }
     }
 }

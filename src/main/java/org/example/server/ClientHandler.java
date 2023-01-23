@@ -7,7 +7,9 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,14 +19,29 @@ public class ClientHandler implements Runnable {
     private final Socket socket;
     private final InputStream in;
     private final OutputStream out;
+    private static final List<ClientHandler> clients = new ArrayList<>();
 
 
     public ClientHandler(Socket socket) throws IOException, NoSuchAlgorithmException {
         this.socket = socket;
         this.in = socket.getInputStream();
         this.out = socket.getOutputStream();
-
         validateWebsocketConnection(in, out);
+        clients.add(this);
+    }
+
+    public void sendMessage(String message) throws IOException {
+        out.write(message.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public static void sendMessageToAllClients(String message) {
+        for (ClientHandler client : clients) {
+            try {
+                client.sendMessage(message);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
@@ -40,6 +57,8 @@ public class ClientHandler implements Runnable {
         byte[] encodedMessage = in.readNBytes(messageLength);
         var decodedMessage = new String(decodeBytes(encodedMessage, decodingKey));
         System.out.println(decodedMessage);
+        // send message to all connected clients
+        sendMessageToAllClients(decodedMessage);
         if (decodedMessage.contains("\u0003�Exiting")) {
             System.out.println("Client has disconnected!");
             System.exit(0);
